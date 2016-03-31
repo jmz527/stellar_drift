@@ -1,5 +1,7 @@
 ;(function() {
-	// Game constructor
+
+// GAME
+//--------------------------------------------------------------------------/
 	var Game = function(canvasID) {
 		var canvas = document.getElementById(canvasID);
 		var screen = canvas.getContext('2d');
@@ -7,6 +9,7 @@
 		var self = this;
 
 		this.bodies = [new Player(this, gameSize)];
+		this.planets = [new Sun(this, gameSize)];
 
 		loadSound("assets/audio/shoot.mp3", function(shootSound) {
 			self.shootSound = shootSound;
@@ -34,8 +37,12 @@
 			};
 		},
 
-		draw: function(screen, gameSize, sun) {
+		draw: function(screen, gameSize) {
 			screen.clearRect(0, 0, gameSize.x, gameSize.y);
+
+			for (var i = 0; i < this.planets.length; i++) {
+				drawCircle(screen, this.planets[i]);
+			};
 
 			for (var i = 0; i < this.bodies.length; i++) {
 				drawRect(screen, this.bodies[i]);
@@ -47,16 +54,17 @@
 		}
 	};
 
-	// var Sun = function(game, gameSize) {
-	// 	this.game = game;
-	// 	this.size = { x: 300, y: 300 };
-	// 	this.center = { x: 0, y: 0 };
-	// 	this.src = 'https://mdn.mozillademos.org/files/1456/Canvas_sun.png';
-	// };
+// GAME PIECES
+//--------------------------------------------------------------------------/
+	var Sun = function(game, gameSize) {
+		this.game = game;
+		this.size = { x: 300, y: 300 };
+		this.center = { x: gameSize.x /2, y: 0 };
+	};
 
-	// Sun.prototype = {
-	// 	update: function() {}
-	// }
+	Sun.prototype = {
+		update: function() {}
+	}
 
 	var Player = function(game, gameSize) {
 		this.game = game;
@@ -78,34 +86,46 @@
 			}
 
 			if (this.Keyboarder.isDown(this.Keyboarder.KEYS.SPACE)) {
-				var bullet = new Bullet({ x: this.center.x, y: this.center.y - this.size.x / 2},
+				var laser = new Laser({ x: this.center.x, y: this.center.y - this.size.x / 2},
 										{ x: 0, y: -6 });
-				this.game.addBody(bullet);
+				this.game.addBody(laser);
 				this.game.shootSound.load();
 				this.game.shootSound.play();
 			}
 		}
 	};
 
-	var Bullet = function(center, velocity) {
+	var Laser = function(center, velocity) {
 		this.size = { x: 3, y: 3 };
 		this.center = center;
 		this.velocity = velocity;
 	};
 
-	Bullet.prototype = {
+	Laser.prototype = {
 		update: function() {
 			this.center.x += this.velocity.x;
 			this.center.y += this.velocity.y;
 		}
 	};
 
+// SHAPES
+//--------------------------------------------------------------------------/
 	var drawRect = function(screen, body) {
+		screen.fillStyle = "#fff";
 		screen.fillRect(body.center.x - body.size.x / 2,
 						body.center.y - body.size.y / 2,
 						body.size.x, body.size.y);
 	};
 
+	var drawCircle = function(screen, planet) {
+		var circle = new Path2D();
+		circle.arc(planet.center.x - planet.size.x / 2, 150, 25, 0, 2 * Math.PI);
+		screen.fillStyle = "yellow";
+		screen.fill(circle);
+	}
+
+// KEYBOARDER
+//--------------------------------------------------------------------------/
 	var Keyboarder = function() {
 		var keyState = {};
 
@@ -132,6 +152,8 @@
 				 b1.center.y - b1.size.y / 2 > b2.center.y + b2.size.y / 2);
 	};
 
+// AUDIO
+//--------------------------------------------------------------------------/
 	var loadSound = function(url, callback) {
 		var loaded = function() {
 			callback(sound);
@@ -143,6 +165,8 @@
 		sound.load();
 	}
 
+// INIT
+//--------------------------------------------------------------------------/
 	window.onload = function() {
 		new Game("screen");
 	};
