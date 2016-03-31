@@ -8,17 +8,27 @@
 
 		this.bodies = [new Player(this, gameSize)];
 
-		var tick = function() {
-			self.update();
-			self.draw(screen, gameSize);
-			requestAnimationFrame(tick);
-		};
+		loadSound("assets/audio/shoot.mp3", function(shootSound) {
+			self.shootSound = shootSound;
+			var tick = function() {
+				self.update();
+				self.draw(screen, gameSize);
+				requestAnimationFrame(tick);
+			}
 
-		tick();
+			tick();
+		});
 	};
 
 	Game.prototype = {
 		update: function() {
+			var bodies = this.bodies;
+			var notCollidingWithAnything = function(b1) {
+				return bodies.filter(function(b2) { return colliding(b1, b2); }).length === 0;
+			}
+
+			this.bodies = this.bodies.filter(notCollidingWithAnything);
+
 			for (var i = 0; i < this.bodies.length; i++) {
 				this.bodies[i].update();
 			};
@@ -30,6 +40,10 @@
 			for (var i = 0; i < this.bodies.length; i++) {
 				drawRect(screen, this.bodies[i]);
 			};
+		},
+
+		addBody: function(body) {
+			this.bodies.push(body);
 		}
 	};
 
@@ -63,13 +77,26 @@
 				this.center.y += 2;
 			}
 
-			// if (this.Keyboarder.isDown(this.Keyboarder.KEYS.SPACE)) {
-			// 	var bullet = new Bullet({ x: this.center.x, y: this.center.y - this.size.x / 2},
-			// 							{ x: 0, y: -6 });
-			// 	this.game.addBody(bullet);
-			// 	this.game.shootSound.load();
-			// 	this.game.shootSound.play();
-			// }
+			if (this.Keyboarder.isDown(this.Keyboarder.KEYS.SPACE)) {
+				var bullet = new Bullet({ x: this.center.x, y: this.center.y - this.size.x / 2},
+										{ x: 0, y: -6 });
+				this.game.addBody(bullet);
+				this.game.shootSound.load();
+				this.game.shootSound.play();
+			}
+		}
+	};
+
+	var Bullet = function(center, velocity) {
+		this.size = { x: 3, y: 3 };
+		this.center = center;
+		this.velocity = velocity;
+	};
+
+	Bullet.prototype = {
+		update: function() {
+			this.center.x += this.velocity.x;
+			this.center.y += this.velocity.y;
 		}
 	};
 
@@ -96,6 +123,25 @@
 
 		this.KEYS = { LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, A: 65, W: 87, D: 68, S: 83, SPACE: 32 };
 	};
+
+	var colliding = function(b1, b2) {
+		return !(b1 === b2 ||
+				 b1.center.x + b1.size.x / 2 < b2.center.x - b2.size.x / 2 ||
+				 b1.center.y + b1.size.y / 2 < b2.center.y - b2.size.y / 2 ||
+				 b1.center.x - b1.size.x / 2 > b2.center.x + b2.size.x / 2 ||
+				 b1.center.y - b1.size.y / 2 > b2.center.y + b2.size.y / 2);
+	};
+
+	var loadSound = function(url, callback) {
+		var loaded = function() {
+			callback(sound);
+			sound.removeEventListener('canplaythrough', loaded);
+		};
+
+		var sound = new Audio(url);
+		sound.addEventListener('canplaythrough', loaded);
+		sound.load();
+	}
 
 	window.onload = function() {
 		new Game("screen");
