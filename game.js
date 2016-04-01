@@ -8,7 +8,7 @@
 		var gameSize = { x: canvas.width, y: canvas.height };
 		var self = this;
 
-		this.bodies = [new Player(this, gameSize)];
+		this.ships = [new Player(this, gameSize)];
 		this.planets = [new Sun(this, gameSize)];
 
 		loadSound("assets/audio/shoot.mp3", function(shootSound) {
@@ -25,15 +25,15 @@
 
 	Game.prototype = {
 		update: function() {
-			var bodies = this.bodies;
+			var ships = this.ships;
 			var notCollidingWithAnything = function(b1) {
-				return bodies.filter(function(b2) { return colliding(b1, b2); }).length === 0;
+				return ships.filter(function(b2) { return colliding(b1, b2); }).length === 0;
 			}
 
-			this.bodies = this.bodies.filter(notCollidingWithAnything);
+			this.ships = this.ships.filter(notCollidingWithAnything);
 
-			for (var i = 0; i < this.bodies.length; i++) {
-				this.bodies[i].update();
+			for (var i = 0; i < this.ships.length; i++) {
+				this.ships[i].update();
 			};
 		},
 
@@ -44,13 +44,13 @@
 				drawCircle(screen, this.planets[i]);
 			};
 
-			for (var i = 0; i < this.bodies.length; i++) {
-				drawRect(screen, this.bodies[i]);
+			for (var i = 0; i < this.ships.length; i++) {
+				drawRect(screen, this.ships[i]);
 			};
 		},
 
 		addBody: function(body) {
-			this.bodies.push(body);
+			this.ships.push(body);
 		}
 	};
 
@@ -124,6 +124,16 @@
 		screen.fill(circle);
 	}
 
+// INTERACTIONS
+//--------------------------------------------------------------------------/
+	var colliding = function(b1, b2) {
+		return !(b1 === b2 ||
+				 b1.center.x + b1.size.x / 2 < b2.center.x - b2.size.x / 2 ||
+				 b1.center.y + b1.size.y / 2 < b2.center.y - b2.size.y / 2 ||
+				 b1.center.x - b1.size.x / 2 > b2.center.x + b2.size.x / 2 ||
+				 b1.center.y - b1.size.y / 2 > b2.center.y + b2.size.y / 2);
+	};
+
 // KEYBOARDER
 //--------------------------------------------------------------------------/
 	var Keyboarder = function() {
@@ -142,14 +152,6 @@
 		};
 
 		this.KEYS = { LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, A: 65, W: 87, D: 68, S: 83, SPACE: 32 };
-	};
-
-	var colliding = function(b1, b2) {
-		return !(b1 === b2 ||
-				 b1.center.x + b1.size.x / 2 < b2.center.x - b2.size.x / 2 ||
-				 b1.center.y + b1.size.y / 2 < b2.center.y - b2.size.y / 2 ||
-				 b1.center.x - b1.size.x / 2 > b2.center.x + b2.size.x / 2 ||
-				 b1.center.y - b1.size.y / 2 > b2.center.y + b2.size.y / 2);
 	};
 
 // AUDIO
