@@ -16,6 +16,16 @@ var Engine = { //the main Engine object
 		Increment: null, //this is the main coin increment,
 		StatusMessage: null, //this is so we can reset the status message timer
 	},
+
+	Upgrades: [
+		{ Name: "+1 Per Click", Cost: 10, Bought: false, PerClick: 1, PerIncrement: 0, Increment: 0 },
+		{ Name: "+1 Increment", Cost: 50, Bought: false, PerClick: 0, PerIncrement: 1, Increment: 0 },
+		{ Name: "+1 Per Click", Cost: 75, Bought: false, PerClick: 1, PerIncrement: 0, Increment: 0 },
+		{ Name: "-0.5sec", Cost: 100, Bought: false, PerClick: 0, PerIncrement: 0, Increment: 500 },
+		{ Name: "-0.5sec", Cost: 150, Bought: false, PerClick: 0, PerIncrement: 0, Increment: 500 },
+		{ Name: "+2 Increment", Cost: 300, Bought: false, PerClick: 0, PerIncrement: 2, Increment: 0 },
+		{ Name: "-0.5sec", Cost: 350, Bought: false, PerClick: 0, PerIncrement: 0, Increment: 500 }
+	],
 	
 	/** achievements **/
 	Achievements: [ //the achievements array (name, how many clicks to earn and the reward)
@@ -29,6 +39,9 @@ var Engine = { //the main Engine object
 		ClickBox: { //this is our main click element
 			x: 320, y: 180, //position
 			w: 128, h: 128 //size
+		},
+		UpgradeButtons: {
+			w: 128, h: 33
 		}
 	},
 	
@@ -54,13 +67,48 @@ var Engine = { //the main Engine object
 		for (var a = 0; a < Engine.Achievements.length; a++) { //loop through each achievement in the array
 			if (Engine.Achievements[a].Clicks == Engine.Player.Clicks) { //have you matched the achievement clicks?
 				Engine.StatusMessage = "GOT ACHIEVEMENT: " + Engine.Achievements[a].Name; //show message with achievement name
-				clearTimeout(Engine.Timers.StatusMessage); //clear the current timeout
-				Engine.Timers.StatusMessage = setTimeout(function() { //assign a new one
-					Engine.StatusMessage = ""; //reset message after 3 seconds
-					clearTimeout(Engine.Timers.StatusMessage);
-					Engine.Timers.StatusMessage = null;
-				}, 3000); //3 secs
+				// clearTimeout(Engine.Timers.StatusMessage); //clear the current timeout
+				// Engine.Timers.StatusMessage = setTimeout(function() { //assign a new one
+				// 	Engine.StatusMessage = ""; //reset message after 3 seconds
+				// 	clearTimeout(Engine.Timers.StatusMessage);
+				// 	Engine.Timers.StatusMessage = null;
+				// }, 3000); //3 secs
 			}
+		}
+	},
+	Status: function(txt) {
+		Engine.StatusMessage = txt;
+		clearTimeout(Engine.Timers.StatusMessage); //clear the current timeout
+		Engine.Timers.StatusMessage = setTimeout(function() { //assign a new one
+			Engine.StatusMessage = ""; //reset message after 3 seconds
+			clearTimeout(Engine.Timers.StatusMessage);
+			Engine.Timers.StatusMessage = null;
+		}, 3000); //3 secs
+	},
+	BuyUpgrade: function(ind) {
+		var thisCost = Engine.Upgrades[ind].Cost;
+		var thisIncrement = Engine.Upgrades[ind].Increment;
+		var thisName = Engine.Upgrades[ind].Name;
+		var thisPerClick = Engine.Upgrades[ind].PerClick;
+		var thisPerIncrement = Engine.Upgrades[ind].PerIncrement;
+		if (Engine.Player.Coins >= thisCost) {
+			Engine.Player.Coins -= thisCost; //take the coins
+			Engine.Upgrades[ind].Bought = true; //set the item as "bought"
+			if (thisIncrement > 0) { //if the increment is available
+				clearInterval(Engine.Timers.Increment); //clear timer
+				Engine.Timers.Increment = null; //set to null
+				Engine.Player.Increment -= thisIncrement; //change time
+				Engine.StartIncrement(); //start timer again
+			}
+			if (thisPerClick > 0) { //if the per click is available
+				Engine.Player.PerClick += thisPerClick; //increase the per click
+			}
+			if (thisPerIncrement > 0) { //if the per increment is available
+				Engine.Player.PerIncrement += thisPerIncrement; //increase the per increment
+			}
+			Engine.Status("UPGRADED: " + thisName); //show "UPGRADED: NAME"
+		} else {
+			Engine.Status("NOT ENOUGH COINS!"); //not enough coins!
 		}
 	},
 	
@@ -76,6 +124,12 @@ var Engine = { //the main Engine object
 				if (m.pageY >= Engine.Elements.ClickBox.y && m.pageY <= (Engine.Elements.ClickBox.y + Engine.Elements.ClickBox.h)) { //check to see if the click is within the box Y co-ordinates
 					Engine.Player.Clicks++; //add a click
 					Engine.IncreaseCoins(Engine.Player.PerClick); //call coin increase
+				}
+			} else if (m.pageX >= 670 && m.pageX <= 798) { //hardcoded upgrade area
+				if (m.pageY >= Engine.Elements.UpgradeButtons.h && m.pageY <= Engine.Elements.UpgradeButtons.h + (Engine.Upgrades.length * Engine.Elements.UpgradeButtons.h)) { //clicked within the area
+					var num = m.pageY - Engine.Elements.UpgradeButtons.h; //get the offset from the top
+					var hitButton = num.roundTo(Engine.Elements.UpgradeButtons.h); //round the number to the nearest height
+					Engine.BuyUpgrade((hitButton / Engine.Elements.UpgradeButtons.h) - 1); //final calculation to get the index you've clicked on
 				}
 			}
 			return false;
@@ -100,7 +154,19 @@ var Engine = { //the main Engine object
 		Engine.Text(Engine.Player.PerClick + " Coins per click", 16, 56, "Calibri", 20, "blue"); //per click display
 		Engine.Text(Engine.Player.PerIncrement + " Coins every " + (Engine.Player.Increment / 1000) + "secs", 16, 80, "Calibri", 20, "blue"); //increment display
 		Engine.Text(Engine.StatusMessage, 16, 104, "Calibri", 20, "orange"); //new status message
-		
+
+		//render upgrades
+		Engine.Text("Upgrades:", 675, 20, "Calibri", 20, "blue"); //show the title
+		for (var u = 0; u < Engine.Upgrades.length; u++) { //loop through the upgrades
+			if (Engine.Upgrades[u].Bought == false) { //has the player bought the item?
+				Engine.Rect(670, Engine.Elements.UpgradeButtons.h * (u+1), Engine.Elements.UpgradeButtons.w, 32, "lightgreen"); //display a "button"
+				Engine.Text(Engine.Upgrades[u].Name + " (Cost: " + Engine.Upgrades[u].Cost + ")", 674, 22 + (Engine.Elements.UpgradeButtons.h * (u + 1)), "Calibri", 12, "#111"); //put text over that button
+			} else {
+				Engine.Rect(670, Engine.Elements.UpgradeButtons.h * (u+1), Engine.Elements.UpgradeButtons.w, 32, "silver"); //display a "button"
+				Engine.Text(Engine.Upgrades[u].Name + " (BOUGHT)", 674, 22 + (Engine.Elements.UpgradeButtons.h * (u + 1)), "Calibri", 12, "#111"); //put text over that button
+			}
+		}
+
 		Engine.GameLoop(); //re-iterate back to gameloop
 	},
 	GameLoop: function() { //the gameloop function
@@ -135,4 +201,10 @@ window.requestAnimFrame = (function(){
 		fpsLoop = window.setTimeout(callback, 1000 / 60);
 	};
 }());
+
+Number.prototype.roundTo = function(num) {
+	var resto = this%num;
+	return this+num-resto;
+}
+
 window.onload = Engine.Init(); //the engine starts when window loads
