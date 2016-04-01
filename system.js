@@ -1,5 +1,8 @@
 var Engine = { //the main Engine object
 	/** variables **/
+	Info: { //the engine info
+		Version: 0.13 //engine version number
+	},
 	Player: { //the player object
 		Clicks: 0, //how many clicks
 		Coins: 0, //how many coins that player has
@@ -7,7 +10,7 @@ var Engine = { //the main Engine object
 		PerIncrement: 0, //how many coins per timed increment
 		Increment: 2000 //how long the increment is (2secs)
 	},
-	StatusMessage: "",
+	StatusMessage: "", //status message
 	Canvas: { //the canvas object
 		Element: null, //this will be a canvas element
 		Context: null //this will become a 2d context
@@ -19,12 +22,12 @@ var Engine = { //the main Engine object
 	
 	/** upgrade **/
 	Upgrades: [ //the upgrades array 
-		{ Name: "+1 Per Click", Cost: 10, Bought: false, PerClick: 1, PerIncrement: 0, Increment: 0 },
-		{ Name: "+1 Increment", Cost: 50, Bought: false, PerClick: 0, PerIncrement: 1, Increment: 0 },
-		{ Name: "+1 Per Click", Cost: 75, Bought: false, PerClick: 1, PerIncrement: 0, Increment: 0 },
+		{ Name: "+1 Click", Cost: 10, Bought: false, PerClick: 1, PerIncrement: 0, Increment: 0 },
+		{ Name: "+1 Inc.", Cost: 50, Bought: false, PerClick: 0, PerIncrement: 1, Increment: 0 },
+		{ Name: "+1 Click", Cost: 75, Bought: false, PerClick: 1, PerIncrement: 0, Increment: 0 },
 		{ Name: "-0.5sec", Cost: 100, Bought: false, PerClick: 0, PerIncrement: 0, Increment: 500 },
 		{ Name: "-0.5sec", Cost: 150, Bought: false, PerClick: 0, PerIncrement: 0, Increment: 500 },
-		{ Name: "+2 Increment", Cost: 300, Bought: false, PerClick: 0, PerIncrement: 2, Increment: 0 },
+		{ Name: "+2 Inc.", Cost: 300, Bought: false, PerClick: 0, PerIncrement: 2, Increment: 0 },
 		{ Name: "-0.5sec", Cost: 350, Bought: false, PerClick: 0, PerIncrement: 0, Increment: 500 },
 	],
 	
@@ -34,8 +37,8 @@ var Engine = { //the main Engine object
 		{ Name: "Medium Clicker", Clicks: 50, Reward: 0 },
 		{ Name: "Large Clicker", Clicks: 100, Reward: 50 }
 	],
-
-	/** images  - REMEMEBER TO CHANGE THE FILE LOCATION **/
+	
+	/** images **/
 	Images: { //the images object
 		Background: { File: "assets/img/background.jpg", x: 0, y: 0, w: 800, h: 600, Image: new Image() }, //background image
 		ClickArea: { File: "assets/img/clickarea.png", w: 128, h: 128, Image: new Image() }, //click area target
@@ -47,16 +50,20 @@ var Engine = { //the main Engine object
 			x: 320, y: 180, //position
 			w: 128, h: 128 //size
 		},
-		UpgradeButtons: {
+		UpgradeButtons: { //no position because it's hard coded
 			w: 128, h: 33
 		},
-		Save: {
-			x: 16, y: 350,
-			w: 84, h: 64
+		Save: { //this is our main save element
+			x: 16, y: 350, //position
+			w: 84, h: 64  //size
 		},
-		Load: {
-			x: 16, y: 440,
-			w: 84, h: 64
+		Load: { //this is our main load element
+			x: 16, y: 440, //position
+			w: 84, h: 64  //size
+		},
+		Reset: { //this is our main load element
+			x: 16, y: 530, //position
+			w: 84, h: 64  //size
 		}
 	},
 	
@@ -130,17 +137,42 @@ var Engine = { //the main Engine object
 		}
 	},
 	Save: function() { //save function
+		window.localStorage.setItem("incremental-info", JSON.stringify(Engine.Info)); //set localstorage for engine info
 		window.localStorage.setItem("incremental-player", JSON.stringify(Engine.Player)); //set localstorage for player
 		window.localStorage.setItem("incremental-upgrades", JSON.stringify(Engine.Upgrades)); //set localstorage for upgrades
 		Engine.Status("Saved!"); //show status message
 	},
 	Load: function() { //load function
-		if (window.localStorage.getItem("incremental-player")) { //does a save exist?
-			Engine.Player = JSON.parse(window.localStorage.getItem("incremental-player")); //load player
-			Engine.Upgrades = JSON.parse(window.localStorage.getItem("incremental-upgrades")); //load upgrades
-			Engine.Status("Loaded!"); //show status message
+		if (window.localStorage.getItem("incremental-info")) {
+			var version = JSON.parse(window.localStorage.getItem("incremental-info"));
+			if (version.Version <= Engine.Info.Version) {
+				Engine.Player = JSON.parse(window.localStorage.getItem("incremental-player")); //load player
+				Engine.Upgrades = JSON.parse(window.localStorage.getItem("incremental-upgrades")); //load upgrades
+				Engine.Save(); //resave the new versioned data
+				Engine.Info = JSON.parse(window.localStorage.getItem("incremental-info"));
+				Engine.Status("Loaded!"); //show status message
+			} else if (version.Version > Engine.Info.Version) {
+				Engine.Status("ERROR: Your save file is newer than the game, please reset.");
+			} else {
+				Engine.Info = JSON.parse(window.localStorage.getItem("incremental-info"));
+				Engine.Player = JSON.parse(window.localStorage.getItem("incremental-player")); //load player
+				Engine.Upgrades = JSON.parse(window.localStorage.getItem("incremental-upgrades")); //load upgrades
+				Engine.Status("Your save file is old, please resave!");
+			}
 		} else {
-			Engine.Status("No save game present"); //no save game
+			Engine.Status("No save game present or old save file"); //no save game
+		}
+	},
+	Reset: function() { //delete save function
+		var areYouSure = confirm("Are you sure?\r\nYOU WILL LOSE YOUR SAVE!!"); //make sure the user is aware
+		if (areYouSure == true) { //if they click yep
+			window.localStorage.setItem("incremental-info", null); //delete
+			window.localStorage.setItem("incremental-player", null); //delete
+			window.localStorage.setItem("incremental-upgrades", null); //delete
+			window.localStorage.removeItem("incremental-info"); //delete
+			window.localStorage.removeItem("incremental-player"); //delete
+			window.localStorage.removeItem("incremental-upgrades"); //delete
+			window.location.reload(); //refresh page to restart
 		}
 	},
 	
@@ -157,19 +189,27 @@ var Engine = { //the main Engine object
 					Engine.Player.Clicks++; //add a click
 					Engine.IncreaseCoins(Engine.Player.PerClick); //call coin increase
 				}
-			} else if (m.pageX >= 670 && m.pageX <= 798) { //hardcoded upgrade area
+			} 
+			if (m.pageX >= 670 && m.pageX <= 798) { //hardcoded upgrade area
 				if (m.pageY >= Engine.Elements.UpgradeButtons.h && m.pageY <= Engine.Elements.UpgradeButtons.h + (Engine.Upgrades.length * Engine.Elements.UpgradeButtons.h)) { //clicked within the area
 					var num = m.pageY - Engine.Elements.UpgradeButtons.h; //get the offset from the top
 					var hitButton = num.roundTo(Engine.Elements.UpgradeButtons.h); //round the number to the nearest height
 					Engine.BuyUpgrade((hitButton / Engine.Elements.UpgradeButtons.h) - 1); //final calculation to get the index you've clicked on
 				}
-			} else if (m.pageX >= Engine.Elements.Save.x && m.pageX <= (Engine.Elements.Save.x + Engine.Elements.Save.w)) { //save button
+			} 
+			if (m.pageX >= Engine.Elements.Save.x && m.pageX <= (Engine.Elements.Save.x + Engine.Elements.Save.w)) { //save button
 				if (m.pageY >= Engine.Elements.Save.y && m.pageY <= (Engine.Elements.Save.y + Engine.Elements.Save.h)) {
 					Engine.Save(); //save
 				}
-			} else if (m.pageX >= Engine.Elements.Load.x && m.pageX <= (Engine.Elements.Load.x + Engine.Elements.Load.w)) { //loadbutton
+			} 
+			if (m.pageX >= Engine.Elements.Load.x && m.pageX <= (Engine.Elements.Load.x + Engine.Elements.Load.w)) { //loadbutton
 				if (m.pageY >= Engine.Elements.Load.y && m.pageY <= (Engine.Elements.Load.y + Engine.Elements.Load.h)) {
 					Engine.Load(); //load
+				}
+			} 
+			if (m.pageX >= Engine.Elements.Reset.x && m.pageX <= (Engine.Elements.Reset.x + Engine.Elements.Reset.w)) { //resetbutton
+				if (m.pageY >= Engine.Elements.Reset.y && m.pageY <= (Engine.Elements.Reset.y + Engine.Elements.Reset.h)) {
+					Engine.Reset(); //reset
 				}
 			}
 			return false;
@@ -196,7 +236,7 @@ var Engine = { //the main Engine object
 		Engine.Text(Engine.Player.Coins + " Coins", 16, 32, "Gloria Hallelujah", 20, "#333", 1); //coin display
 		Engine.Text(Engine.Player.PerClick + " Coins per click", 16, 56, "Gloria Hallelujah", 20, "#333", 1); //per click display
 		Engine.Text(Engine.Player.PerIncrement + " Coins every " + (Engine.Player.Increment / 1000) + "secs", 16, 80, "Gloria Hallelujah", 20, "#333", 1); //increment display
-		Engine.Text(Engine.StatusMessage, 16, 104, "Gloria Hallelujah", 20, "red", 1); //new status message
+		Engine.Text(Engine.StatusMessage, 16, 104, "Gloria Hallelujah", 20, "orange", 1); //new status message
 		
 		//render upgrades
 		Engine.Text("Upgrades:", 675, 20, "Gloria Hallelujah", 20, "#333", 1); //show the title
@@ -218,11 +258,15 @@ var Engine = { //the main Engine object
 		Engine.Rect(Engine.Elements.Load.x, Engine.Elements.Load.y, Engine.Elements.Load.w, Engine.Elements.Load.h, "silver", 0.5); //display a "button"
 		Engine.Text("Load", Engine.Elements.Load.x + 25, Engine.Elements.Load.y + 38, "Gloria Hallelujah", 18, "#111", 1); //put text over that button
 		
+		//reset button
+		Engine.Rect(Engine.Elements.Reset.x, Engine.Elements.Reset.y, Engine.Elements.Reset.w, Engine.Elements.Reset.h, "silver", 0.5); //display a "button"
+		Engine.Text("Reset", Engine.Elements.Reset.x + 22, Engine.Elements.Reset.y + 38, "Gloria Hallelujah", 18, "#111", 1); //put text over that button
+		
 		Engine.GameLoop(); //re-iterate back to gameloop
 	},
 	GameLoop: function() { //the gameloop function
 		Engine.GameRunning = setTimeout(function() { 
-			requestAnimFrame(Engine.Update, Engine.Canvas); 
+			requestAnimFrame(Engine.Update, Engine.Canvas);  //call animation frame
 		}, 1);
 	},
 	
