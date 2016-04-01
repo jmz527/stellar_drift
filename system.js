@@ -16,15 +16,16 @@ var Engine = { //the main Engine object
 		Increment: null, //this is the main coin increment,
 		StatusMessage: null, //this is so we can reset the status message timer
 	},
-
-	Upgrades: [
+	
+	/** upgrade **/
+	Upgrades: [ //the upgrades array 
 		{ Name: "+1 Per Click", Cost: 10, Bought: false, PerClick: 1, PerIncrement: 0, Increment: 0 },
 		{ Name: "+1 Increment", Cost: 50, Bought: false, PerClick: 0, PerIncrement: 1, Increment: 0 },
 		{ Name: "+1 Per Click", Cost: 75, Bought: false, PerClick: 1, PerIncrement: 0, Increment: 0 },
 		{ Name: "-0.5sec", Cost: 100, Bought: false, PerClick: 0, PerIncrement: 0, Increment: 500 },
 		{ Name: "-0.5sec", Cost: 150, Bought: false, PerClick: 0, PerIncrement: 0, Increment: 500 },
 		{ Name: "+2 Increment", Cost: 300, Bought: false, PerClick: 0, PerIncrement: 2, Increment: 0 },
-		{ Name: "-0.5sec", Cost: 350, Bought: false, PerClick: 0, PerIncrement: 0, Increment: 500 }
+		{ Name: "-0.5sec", Cost: 350, Bought: false, PerClick: 0, PerIncrement: 0, Increment: 500 },
 	],
 	
 	/** achievements **/
@@ -42,6 +43,14 @@ var Engine = { //the main Engine object
 		},
 		UpgradeButtons: {
 			w: 128, h: 33
+		},
+		Save: {
+			x: 16, y: 350,
+			w: 84, h: 64
+		},
+		Load: {
+			x: 16, y: 440,
+			w: 84, h: 64
 		}
 	},
 	
@@ -52,6 +61,10 @@ var Engine = { //the main Engine object
 		Engine.Canvas.width = 800; //the width
 		Engine.Canvas.height = 600; //the height
 		$('body').append(Engine.Canvas); //finally append the canvas to the page
+		
+		if (window.localStorage.getItem("incremental-player")) { //does a save exist
+			Engine.Load(); //yep! load it!
+		}
 		
 		Engine.AddClick(); //start the main click event
 		Engine.StartIncrement(); //start the auto coins		
@@ -66,32 +79,26 @@ var Engine = { //the main Engine object
 	CheckAchievements: function() {
 		for (var a = 0; a < Engine.Achievements.length; a++) { //loop through each achievement in the array
 			if (Engine.Achievements[a].Clicks == Engine.Player.Clicks) { //have you matched the achievement clicks?
-				Engine.StatusMessage = "GOT ACHIEVEMENT: " + Engine.Achievements[a].Name; //show message with achievement name
-				// clearTimeout(Engine.Timers.StatusMessage); //clear the current timeout
-				// Engine.Timers.StatusMessage = setTimeout(function() { //assign a new one
-				// 	Engine.StatusMessage = ""; //reset message after 3 seconds
-				// 	clearTimeout(Engine.Timers.StatusMessage);
-				// 	Engine.Timers.StatusMessage = null;
-				// }, 3000); //3 secs
+				Engine.Status("GOT ACHIEVEMENT: " + Engine.Achievements[a].Name); //show message with achievement name
 			}
 		}
 	},
-	Status: function(txt) {
-		Engine.StatusMessage = txt;
-		clearTimeout(Engine.Timers.StatusMessage); //clear the current timeout
-		Engine.Timers.StatusMessage = setTimeout(function() { //assign a new one
-			Engine.StatusMessage = ""; //reset message after 3 seconds
-			clearTimeout(Engine.Timers.StatusMessage);
-			Engine.Timers.StatusMessage = null;
-		}, 3000); //3 secs
+	Status: function(txt) { //show status function
+		Engine.StatusMessage = txt; //assign the text
+		clearTimeout(Engine.Timers.StatusMessage); //clear the timeout
+		Engine.Timers.StatusMessage = setTimeout(function() { //reset the timeout
+			Engine.StatusMessage = ""; //set the status back to nothing
+			clearTimeout(Engine.Timers.StatusMessage); //clear it
+			Engine.Timers.StatusMessage = null; //set to null for completeness
+		}, 3000);
 	},
-	BuyUpgrade: function(ind) {
-		var thisCost = Engine.Upgrades[ind].Cost;
-		var thisIncrement = Engine.Upgrades[ind].Increment;
-		var thisName = Engine.Upgrades[ind].Name;
-		var thisPerClick = Engine.Upgrades[ind].PerClick;
-		var thisPerIncrement = Engine.Upgrades[ind].PerIncrement;
-		if (Engine.Player.Coins >= thisCost) {
+	BuyUpgrade: function(ind) { //buy an upgrade
+		var thisCost = Engine.Upgrades[ind].Cost; //assign cost
+		var thisIncrement = Engine.Upgrades[ind].Increment; //assign increment time
+		var thisName = Engine.Upgrades[ind].Name; //assign name
+		var thisPerClick = Engine.Upgrades[ind].PerClick; //assign per click
+		var thisPerIncrement = Engine.Upgrades[ind].PerIncrement; //assign per increment
+		if (Engine.Player.Coins >= thisCost) { //does the player have enough coins
 			Engine.Player.Coins -= thisCost; //take the coins
 			Engine.Upgrades[ind].Bought = true; //set the item as "bought"
 			if (thisIncrement > 0) { //if the increment is available
@@ -109,6 +116,20 @@ var Engine = { //the main Engine object
 			Engine.Status("UPGRADED: " + thisName); //show "UPGRADED: NAME"
 		} else {
 			Engine.Status("NOT ENOUGH COINS!"); //not enough coins!
+		}
+	},
+	Save: function() { //save function
+		window.localStorage.setItem("incremental-player", JSON.stringify(Engine.Player)); //set localstorage for player
+		window.localStorage.setItem("incremental-upgrades", JSON.stringify(Engine.Upgrades)); //set localstorage for upgrades
+		Engine.Status("Saved!"); //show status message
+	},
+	Load: function() { //load function
+		if (window.localStorage.getItem("incremental-player")) { //does a save exist?
+			Engine.Player = JSON.parse(window.localStorage.getItem("incremental-player")); //load player
+			Engine.Upgrades = JSON.parse(window.localStorage.getItem("incremental-upgrades")); //load upgrades
+			Engine.Status("Loaded!"); //show status message
+		} else {
+			Engine.Status("No save game present"); //no save game
 		}
 	},
 	
@@ -130,6 +151,14 @@ var Engine = { //the main Engine object
 					var num = m.pageY - Engine.Elements.UpgradeButtons.h; //get the offset from the top
 					var hitButton = num.roundTo(Engine.Elements.UpgradeButtons.h); //round the number to the nearest height
 					Engine.BuyUpgrade((hitButton / Engine.Elements.UpgradeButtons.h) - 1); //final calculation to get the index you've clicked on
+				}
+			} else if (m.pageX >= Engine.Elements.Save.x && m.pageX <= (Engine.Elements.Save.x + Engine.Elements.Save.w)) { //save button
+				if (m.pageY >= Engine.Elements.Save.y && m.pageY <= (Engine.Elements.Save.y + Engine.Elements.Save.h)) {
+					Engine.Save(); //save
+				}
+			} else if (m.pageX >= Engine.Elements.Load.x && m.pageX <= (Engine.Elements.Load.x + Engine.Elements.Load.w)) { //loadbutton
+				if (m.pageY >= Engine.Elements.Load.y && m.pageY <= (Engine.Elements.Load.y + Engine.Elements.Load.h)) {
+					Engine.Load(); //load
 				}
 			}
 			return false;
@@ -154,7 +183,7 @@ var Engine = { //the main Engine object
 		Engine.Text(Engine.Player.PerClick + " Coins per click", 16, 56, "Calibri", 20, "blue"); //per click display
 		Engine.Text(Engine.Player.PerIncrement + " Coins every " + (Engine.Player.Increment / 1000) + "secs", 16, 80, "Calibri", 20, "blue"); //increment display
 		Engine.Text(Engine.StatusMessage, 16, 104, "Calibri", 20, "orange"); //new status message
-
+		
 		//render upgrades
 		Engine.Text("Upgrades:", 675, 20, "Calibri", 20, "blue"); //show the title
 		for (var u = 0; u < Engine.Upgrades.length; u++) { //loop through the upgrades
@@ -166,13 +195,21 @@ var Engine = { //the main Engine object
 				Engine.Text(Engine.Upgrades[u].Name + " (BOUGHT)", 674, 22 + (Engine.Elements.UpgradeButtons.h * (u + 1)), "Calibri", 12, "#111"); //put text over that button
 			}
 		}
-
+		
+		//save button
+		Engine.Rect(Engine.Elements.Save.x, Engine.Elements.Save.y, Engine.Elements.Save.w, Engine.Elements.Save.h, "pink"); //display a "button"
+		Engine.Text("Save", Engine.Elements.Save.x + 25, Engine.Elements.Save.y + 24, "Calibri", 18, "#111"); //put text over that button
+		
+		//load button
+		Engine.Rect(Engine.Elements.Load.x, Engine.Elements.Load.y, Engine.Elements.Load.w, Engine.Elements.Load.h, "pink"); //display a "button"
+		Engine.Text("Load", Engine.Elements.Load.x + 25, Engine.Elements.Load.y + 24, "Calibri", 18, "#111"); //put text over that button
+		
 		Engine.GameLoop(); //re-iterate back to gameloop
 	},
 	GameLoop: function() { //the gameloop function
 		Engine.GameRunning = setTimeout(function() { 
 			requestAnimFrame(Engine.Update, Engine.Canvas); 
-		}, 10);
+		}, 1);
 	},
 	
 	/** drawing routines **/
@@ -202,9 +239,9 @@ window.requestAnimFrame = (function(){
 	};
 }());
 
-Number.prototype.roundTo = function(num) {
+Number.prototype.roundTo = function(num) { //new rounding function
 	var resto = this%num;
-	return this+num-resto;
+	return this+num-resto; //return rounded down to nearest "num"
 }
 
 window.onload = Engine.Init(); //the engine starts when window loads
