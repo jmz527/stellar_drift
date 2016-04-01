@@ -34,6 +34,12 @@ var Engine = { //the main Engine object
 		{ Name: "Medium Clicker", Clicks: 50, Reward: 0 },
 		{ Name: "Large Clicker", Clicks: 100, Reward: 50 }
 	],
+
+	/** images  - REMEMEBER TO CHANGE THE FILE LOCATION **/
+	Images: { //the images object
+		Background: { File: "assets/img/background.jpg", x: 0, y: 0, w: 800, h: 600, Image: new Image() }, //background image
+		ClickArea: { File: "assets/img/clickarea.png", w: 128, h: 128, Image: new Image() }, //click area target
+	},
 	
 	/** elements **/
 	Elements: { //this holds the elements
@@ -66,11 +72,16 @@ var Engine = { //the main Engine object
 			Engine.Load(); //yep! load it!
 		}
 		
+		Engine.LoadImages(); //load all the images
 		Engine.AddClick(); //start the main click event
 		Engine.StartIncrement(); //start the auto coins		
 		Engine.Canvas.Context = Engine.Canvas.getContext('2d'); //set the canvas to render in 2d.
 		Engine.GameLoop(); //start rendering the game!
 		
+	},
+	LoadImages: function() { //load image function
+		Engine.Images.Background.Image.src = Engine.Images.Background.File; //load background image
+		Engine.Images.ClickArea.Image.src = Engine.Images.ClickArea.File; //load click area image
 	},
 	IncreaseCoins: function(amount) { //the new coin adding function
 		Engine.Player.Coins += amount; //increase coins by amount
@@ -174,35 +185,38 @@ var Engine = { //the main Engine object
 	Draw: function() { //this is where we will draw all the information for the game!
 		Engine.Canvas.Context.clearRect(0,0,Engine.Canvas.width,Engine.Canvas.height); //clear the frame
 		
+		/** background **/
+		Engine.Image(Engine.Images.Background.Image, Engine.Images.Background.x, Engine.Images.Background.y, Engine.Images.Background.w, Engine.Images.Background.h, 1); //background image drawing
+		
 		/** click button! **/
-		Engine.Rect(Engine.Elements.ClickBox.x, Engine.Elements.ClickBox.y, Engine.Elements.ClickBox.w, Engine.Elements.ClickBox.h, "silver"); //use the Rect function to draw the click button!
-		Engine.Text("CLICK ME", 330, 210, "Calibri", 28, "orange"); //click button text
+		Engine.Image(Engine.Images.ClickArea.Image, Engine.Elements.ClickBox.x, Engine.Elements.ClickBox.y, Engine.Images.ClickArea.w, Engine.Images.ClickArea.h, 0.75); //click area image drawing
+		Engine.Text("Click me", 332, 330, "Gloria Hallelujah", 27, "#333", 1); //click button text
 		
 		/** display/hud **/
-		Engine.Text(Engine.Player.Coins + " Coins", 16, 32, "Calibri", 20, "blue"); //coin display
-		Engine.Text(Engine.Player.PerClick + " Coins per click", 16, 56, "Calibri", 20, "blue"); //per click display
-		Engine.Text(Engine.Player.PerIncrement + " Coins every " + (Engine.Player.Increment / 1000) + "secs", 16, 80, "Calibri", 20, "blue"); //increment display
-		Engine.Text(Engine.StatusMessage, 16, 104, "Calibri", 20, "orange"); //new status message
+		Engine.Text(Engine.Player.Coins + " Coins", 16, 32, "Gloria Hallelujah", 20, "#333", 1); //coin display
+		Engine.Text(Engine.Player.PerClick + " Coins per click", 16, 56, "Gloria Hallelujah", 20, "#333", 1); //per click display
+		Engine.Text(Engine.Player.PerIncrement + " Coins every " + (Engine.Player.Increment / 1000) + "secs", 16, 80, "Gloria Hallelujah", 20, "#333", 1); //increment display
+		Engine.Text(Engine.StatusMessage, 16, 104, "Gloria Hallelujah", 20, "red", 1); //new status message
 		
 		//render upgrades
-		Engine.Text("Upgrades:", 675, 20, "Calibri", 20, "blue"); //show the title
+		Engine.Text("Upgrades:", 675, 20, "Gloria Hallelujah", 20, "#333", 1); //show the title
 		for (var u = 0; u < Engine.Upgrades.length; u++) { //loop through the upgrades
 			if (Engine.Upgrades[u].Bought == false) { //has the player bought the item?
-				Engine.Rect(670, Engine.Elements.UpgradeButtons.h * (u+1), Engine.Elements.UpgradeButtons.w, 32, "lightgreen"); //display a "button"
-				Engine.Text(Engine.Upgrades[u].Name + " (Cost: " + Engine.Upgrades[u].Cost + ")", 674, 22 + (Engine.Elements.UpgradeButtons.h * (u + 1)), "Calibri", 12, "#111"); //put text over that button
+				Engine.Rect(670, Engine.Elements.UpgradeButtons.h * (u+1), Engine.Elements.UpgradeButtons.w, 32, "lightgreen", 0.5); //display a "button"
+				Engine.Text(Engine.Upgrades[u].Name + " (Cost: " + Engine.Upgrades[u].Cost + ")", 674, 22 + (Engine.Elements.UpgradeButtons.h * (u + 1)), "Gloria Hallelujah", 12, "#333", 1); //put text over that button
 			} else {
-				Engine.Rect(670, Engine.Elements.UpgradeButtons.h * (u+1), Engine.Elements.UpgradeButtons.w, 32, "silver"); //display a "button"
-				Engine.Text(Engine.Upgrades[u].Name + " (BOUGHT)", 674, 22 + (Engine.Elements.UpgradeButtons.h * (u + 1)), "Calibri", 12, "#111"); //put text over that button
+				Engine.Rect(670, Engine.Elements.UpgradeButtons.h * (u+1), Engine.Elements.UpgradeButtons.w, 32, "silver", 0.5); //display a "button"
+				Engine.Text(Engine.Upgrades[u].Name + " (BOUGHT)", 674, 22 + (Engine.Elements.UpgradeButtons.h * (u + 1)), "Gloria Hallelujah", 12, "#333", 1); //put text over that button
 			}
 		}
 		
 		//save button
-		Engine.Rect(Engine.Elements.Save.x, Engine.Elements.Save.y, Engine.Elements.Save.w, Engine.Elements.Save.h, "pink"); //display a "button"
-		Engine.Text("Save", Engine.Elements.Save.x + 25, Engine.Elements.Save.y + 24, "Calibri", 18, "#111"); //put text over that button
+		Engine.Rect(Engine.Elements.Save.x, Engine.Elements.Save.y, Engine.Elements.Save.w, Engine.Elements.Save.h, "silver", 0.5); //display a "button"
+		Engine.Text("Save", Engine.Elements.Save.x + 25, Engine.Elements.Save.y + 38, "Gloria Hallelujah", 18, "#111", 1); //put text over that button
 		
 		//load button
-		Engine.Rect(Engine.Elements.Load.x, Engine.Elements.Load.y, Engine.Elements.Load.w, Engine.Elements.Load.h, "pink"); //display a "button"
-		Engine.Text("Load", Engine.Elements.Load.x + 25, Engine.Elements.Load.y + 24, "Calibri", 18, "#111"); //put text over that button
+		Engine.Rect(Engine.Elements.Load.x, Engine.Elements.Load.y, Engine.Elements.Load.w, Engine.Elements.Load.h, "silver", 0.5); //display a "button"
+		Engine.Text("Load", Engine.Elements.Load.x + 25, Engine.Elements.Load.y + 38, "Gloria Hallelujah", 18, "#111", 1); //put text over that button
 		
 		Engine.GameLoop(); //re-iterate back to gameloop
 	},
@@ -213,18 +227,33 @@ var Engine = { //the main Engine object
 	},
 	
 	/** drawing routines **/
-	Rect: function(x,y,w,h,col) { //x position, y position, width, height and colour
+	Image: function(img,x,y,w,h,opac) { //image drawing function, x position, y position, width, height and opacity
+		if (opac) { //if opacity exists
+			Engine.Canvas.Context.globalAlpha = opac; //amend it
+		}
+		Engine.Canvas.Context.drawImage(img,x,y,w,h); //draw image
+		Engine.Canvas.Context.globalAlpha = 1.0; //reset opacity
+	},
+	Rect: function(x,y,w,h,col,opac) { //x position, y position, width, height and colour
 		if (col.length > 0) { //if you have included a colour
 			Engine.Canvas.Context.fillStyle = col; //add the colour!
+		}
+		if (opac > 0) { //if opacity exists
+			Engine.Canvas.Context.globalAlpha = opac; //reset opacity
 		}
 		Engine.Canvas.Context.fillRect(x,y,w,h); //draw the rectangle
+		Engine.Canvas.Context.globalAlpha = 1.0;
 	},
-	Text: function(text, x, y, font, size, col) { //the text, x position, y position, font (arial, verdana etc), font size and colour
+	Text: function(text,x,y,font,size,col,opac) { //the text, x position, y position, font (arial, verdana etc), font size and colour
 		if (col.length > 0) { //if you have included a colour
 			Engine.Canvas.Context.fillStyle = col; //add the colour!
 		}
-		Engine.Canvas.Context.font = size + "px " + font;
-		Engine.Canvas.Context.fillText(text,x,y);
+		if (opac > 0) { //if opacity exists
+			Engine.Canvas.Context.globalAlpha = opac; //amend it
+		}
+		Engine.Canvas.Context.font = size + "px " + font; //set font style
+		Engine.Canvas.Context.fillText(text,x,y); //show text
+		Engine.Canvas.Context.globalAlpha = 1.0; //reset opacity
 	}
 };
 /** This is a request animation frame function that gets the best possible animation process for your browser, I won't go into specifics; just know it's worth using ;) **/
