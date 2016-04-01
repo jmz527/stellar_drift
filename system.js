@@ -30,7 +30,9 @@ var Engine = { //the main Engine object
 		{ Name: "+2 Inc.", Cost: 300, Bought: false, PerClick: 0, PerIncrement: 2, Increment: 0 },
 		{ Name: "-0.5sec", Cost: 350, Bought: false, PerClick: 0, PerIncrement: 0, Increment: 500 },
 	],
-	
+
+	ClickParticles: [],
+
 	/** achievements **/
 	Achievements: [ //the achievements array (name, how many clicks to earn and the reward)
 		{ Name: "Small Clicker", Clicks: 25, Reward: 0 },
@@ -187,6 +189,9 @@ var Engine = { //the main Engine object
 			if (m.pageX >= Engine.Elements.ClickBox.x && m.pageX <= (Engine.Elements.ClickBox.x + Engine.Elements.ClickBox.w)) { //check to see if the click is within the box X co-ordinates
 				if (m.pageY >= Engine.Elements.ClickBox.y && m.pageY <= (Engine.Elements.ClickBox.y + Engine.Elements.ClickBox.h)) { //check to see if the click is within the box Y co-ordinates
 					Engine.Player.Clicks++; //add a click
+					var x = Math.floor(Math.random() * 128) + 320; //get a random x
+					var y = Math.floor(Math.random() * 64) + 244; //get a random y
+					Engine.ClickParticles.push({ x:x, y:y, o:10.0 }); //push the particle into the array
 					Engine.IncreaseCoins(Engine.Player.PerClick); //call coin increase
 				}
 			} 
@@ -219,7 +224,13 @@ var Engine = { //the main Engine object
 	/** animation routines **/
 	GameRunning: null, //this is a new variable so we can pause/stop the game
 	Update: function() { //this is where our logic gets updated
-		
+		for (var p = 0; p < Engine.ClickParticles.length; p++) { //loop through particles
+			Engine.ClickParticles[p].y--; //move up by 1px
+			Engine.ClickParticles[p].o -= 0.1; //reduce opacity by 0.1
+			if (Engine.ClickParticles[p].o <= 0.0) { //if it's invisible
+				Engine.ClickParticles.splice(p,1); //remove the particle from the array
+			}
+		}
 		Engine.Draw(); //call the canvas draw function
 	},
 	Draw: function() { //this is where we will draw all the information for the game!
@@ -231,7 +242,12 @@ var Engine = { //the main Engine object
 		/** click button! **/
 		Engine.Image(Engine.Images.ClickArea.Image, Engine.Elements.ClickBox.x, Engine.Elements.ClickBox.y, Engine.Images.ClickArea.w, Engine.Images.ClickArea.h, 0.75); //click area image drawing
 		Engine.Text("Click me", 332, 330, "Gloria Hallelujah", 27, "#333", 1); //click button text
-		
+
+		/** particles **/
+		for (var p = 0; p < Engine.ClickParticles.length; p++) {
+			Engine.Text("+" + Engine.Player.PerClick, Engine.ClickParticles[p].x, Engine.ClickParticles[p].y, "Arial", 32, "blue", Engine.ClickParticles[p].o);
+		}
+
 		/** display/hud **/
 		Engine.Text(Engine.Player.Coins + " Coins", 16, 32, "Gloria Hallelujah", 20, "#333", 1); //coin display
 		Engine.Text(Engine.Player.PerClick + " Coins per click", 16, 56, "Gloria Hallelujah", 20, "#333", 1); //per click display
