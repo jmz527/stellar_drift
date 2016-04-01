@@ -3,12 +3,15 @@ var Engine = { //the main Engine object
 	Player: { //the player object
 		Coins: 0, //how many coins that player has
 		PerClick: 1, //how many coins per click
-		PerIncrement: 0, //how many coins per timed increment
+		PerIncrement: 1, //how many coins per timed increment
 		Increment: 2000 //how long the increment is (2secs)
 	},
 	Canvas: { //the canvas object
 		Element: null, //this will be a canvas element
 		Context: null //this will become a 2d context
+	},
+	Timers: {
+		Increment: null,
 	},
 
 	Elements: {
@@ -27,11 +30,16 @@ var Engine = { //the main Engine object
 		$('body').append(Engine.Canvas); //finally append the canvas to the page
 
 		Engine.AddClick();
-		
+		Engine.StartIncrement();
 		Engine.Canvas.Context = Engine.Canvas.getContext('2d'); //set the canvas to render in 2d.
 		Engine.GameLoop(); //start rendering the game!
 	},
 
+	StartIncrement: function() {
+		Engine.Timers.Increment = setInterval(function() {
+			Engine.Player.Coins += Engine.Player.PerIncrement;
+		}, Engine.Player.Increment);
+	},
 	AddClick: function() { //the click function
 		$(Engine.Canvas).on('click', function(m) { //we add a click to the Engine.Canvas object (note the 'm')
 			if (m.pageX >= Engine.Elements.ClickBox.x && m.pageX <= (Engine.Elements.ClickBox.x + Engine.Elements.ClickBox.w)) { //check to see if the click is within the box X co-ordinates
