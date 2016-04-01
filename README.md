@@ -1,5 +1,6 @@
 # stellar_drift
 Space exploration game
 
+Inspiration:
 
-http://incremental.barriereader.co.uk/
+[link](http://incremental.barriereader.co.uk/)
