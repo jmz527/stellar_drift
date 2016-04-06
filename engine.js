@@ -50,6 +50,7 @@ var Engine = { //main Engine object
 	Images: { //the images object
 		Background: { File: "assets/img/background.jpg", x: 0, y: 0, w: 800, h: 600, Image: new Image() }, //background image
 		ClickArea: { File: "assets/img/clickarea.png", w: 128, h: 128, Image: new Image() }, //click area target
+		CoinSprite: { File: "assets/img/coin.png", w: 100, h: 100, Image: new Image() }
 	},
 
 	//ELEMENTS
@@ -61,6 +62,12 @@ var Engine = { //main Engine object
 		},
 		UpgradeButtons: { //no position because it's hard coded
 			w: 128, h: 33
+		},
+		CoinSprite: {
+			sx: 0, sy: 0,
+			sw: 100, sh: 100,
+			cx: 250, cy: 50,
+			w: 100, h: 100
 		},
 		Save: { //this is our main save element
 			x: 16, y: 350, //position
@@ -101,6 +108,7 @@ var Engine = { //main Engine object
 	LoadImages: function() { //load image function
 		Engine.Images.Background.Image.src = Engine.Images.Background.File; //load background image
 		Engine.Images.ClickArea.Image.src = Engine.Images.ClickArea.File; //load click area image
+		Engine.Images.CoinSprite.Image.src = Engine.Images.CoinSprite.File; //load click area image
 	},
 
 	//SAVE VERSIONS
@@ -250,9 +258,9 @@ var Engine = { //main Engine object
 		Engine.Canvas.Context.clearRect(0,0,Engine.Canvas.width,Engine.Canvas.height); //clear the frame
 
 		/** background **/
-		Engine.Image(Engine.Images.Background.Image, Engine.Images.Background.x, Engine.Images.Background.y, Engine.Images.Background.w, Engine.Images.Background.h, 1); //background image drawing
+		// Engine.Image(Engine.Images.Background.Image, Engine.Images.Background.x, Engine.Images.Background.y, Engine.Images.Background.w, Engine.Images.Background.h, 1); //background image drawing
 
-		// Engine.Pattern(0, 0, 860, 660, "assets/img/bg-b.jpg");
+		Engine.Pattern(0, 0, 860, 660, "assets/img/bg-b.jpg");
 
 		Engine.Circle(75, 75, 50, "green");
 
@@ -261,7 +269,15 @@ var Engine = { //main Engine object
 				Engine.Rect(x, y, 20, 20, "teal");
 			}	
 		}
-		
+
+		if (Engine.Elements.CoinSprite.sx >= 900) { Engine.Elements.CoinSprite.sx = 0 };
+
+		// Engine.Image(Engine.Images.CoinSprite.Image, Engine.Elements.CoinSprite.x, Engine.Elements.CoinSprite.y, Engine.Images.CoinSprite.w, Engine.Images.CoinSprite.h);
+		Engine.Canvas.Context.drawImage(Engine.Images.CoinSprite.Image, Engine.Elements.CoinSprite.sx, Engine.Elements.CoinSprite.sy, Engine.Elements.CoinSprite.sw, Engine.Elements.CoinSprite.sh, Engine.Elements.CoinSprite.cx, Engine.Elements.CoinSprite.cy, Engine.Elements.CoinSprite.w, Engine.Elements.CoinSprite.h);
+		// Engine.Canvas.Context.drawImage(Engine.Images.CoinSprite.Image, 0, 0, 100, 100, 250, 100, 100, 100);
+
+		Engine.Elements.CoinSprite.sx += 100;
+
 		/** click button! **/
 		Engine.Image(Engine.Images.ClickArea.Image, Engine.Elements.ClickBox.x, Engine.Elements.ClickBox.y, Engine.Images.ClickArea.w, Engine.Images.ClickArea.h, 0.75); //click area image drawing
 		Engine.Text("Click me", 332, 330, "Gloria Hallelujah", 27, "#333", 1); //click button text
